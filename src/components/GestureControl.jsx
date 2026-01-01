@@ -2,12 +2,11 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Hands } from '@mediapipe/hands';
 import { Camera } from '@mediapipe/camera_utils';
 
-const GestureControl = () => {
+const GestureControl = ({ isActive, onToggle }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const handsRef = useRef(null);
   const cameraRef = useRef(null);
-  const [isActive, setIsActive] = useState(false);
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
   const [isVisible, setIsVisible] = useState(false);
 
@@ -18,12 +17,13 @@ const GestureControl = () => {
   const leftClickStateRef = useRef(false);
 
   // Constants (matching your notebook)
-  const deadZone = 20;
+  // Note: Dead zone is in screen pixels, thresholds are in video pixels
+  const deadZone = 5; // Reduced for screen coordinates
   const alpha = 0.2; // EMA smoothing factor
-  const pinchThreshold = 50;
-  const clickThreshold = 40;
-  const leftClickThreshold = 50;
-  const sensitivity = 1.4;
+  const pinchThreshold = 50; // Video pixel distance for pinch
+  const clickThreshold = 40; // Video pixel distance for clicks
+  const leftClickThreshold = 50; // Video pixel distance for left click
+  const sensitivity = 1.0; // Can adjust if needed
 
   const onResults = useCallback((results) => {
     const canvasCtx = canvasRef.current.getContext('2d');
@@ -80,23 +80,30 @@ const GestureControl = () => {
           // Map normalized coordinates (0-1) to screen coordinates
           // Flip horizontally for mirror effect (like your notebook)
           const flippedX = 1 - indexTip.x;
-          const screenX = flippedX * screenWidth;
-          const screenY = indexTip.y * screenHeight;
+          
+          // Convert normalized coordinates to screen pixels
+          // Apply sensitivity if needed (optional scaling)
+          const screenX = flippedX * screenWidth * sensitivity;
+          const screenY = indexTip.y * screenHeight * sensitivity;
+
+          // Clamp to screen bounds
+          const clampedX = Math.max(0, Math.min(screenWidth, screenX));
+          const clampedY = Math.max(0, Math.min(screenHeight, screenY));
 
           // Apply EMA smoothing
           if (smoothedPositionRef.current.x === null) {
-            smoothedPositionRef.current.x = screenX;
-            smoothedPositionRef.current.y = screenY;
+            smoothedPositionRef.current.x = clampedX;
+            smoothedPositionRef.current.y = clampedY;
           } else {
-            smoothedPositionRef.current.x = alpha * screenX + (1 - alpha) * smoothedPositionRef.current.x;
-            smoothedPositionRef.current.y = alpha * screenY + (1 - alpha) * smoothedPositionRef.current.y;
+            smoothedPositionRef.current.x = alpha * clampedX + (1 - alpha) * smoothedPositionRef.current.x;
+            smoothedPositionRef.current.y = alpha * clampedY + (1 - alpha) * smoothedPositionRef.current.y;
           }
 
-          // Apply dead zone
+          // Apply dead zone (in screen pixels)
           const deltaX = Math.abs(smoothedPositionRef.current.x - prevPositionRef.current.x);
           const deltaY = Math.abs(smoothedPositionRef.current.y - prevPositionRef.current.y);
 
-          if (deltaX > deadZone || deltaY > deadZone) {
+          if (deltaX > deadZone || deltaY > deadZone || prevPositionRef.current.x === 0) {
             setCursorPosition({
               x: smoothedPositionRef.current.x,
               y: smoothedPositionRef.current.y,
@@ -111,16 +118,21 @@ const GestureControl = () => {
           setIsVisible(false);
         }
 
-        // Handle clicks
+        // Handle clicks - use current smoothed position for accuracy
+        const currentCursorX = smoothedPositionRef.current.x !== null ? smoothedPositionRef.current.x : cursorPosition.x;
+        const currentCursorY = smoothedPositionRef.current.y !== null ? smoothedPositionRef.current.y : cursorPosition.y;
+
         if (rightClickEngaged && !rightClickStateRef.current) {
           // Right click - trigger context menu or custom action
-          const element = document.elementFromPoint(cursorPosition.x, cursorPosition.y);
+          const element = document.elementFromPoint(currentCursorX, currentCursorY);
           if (element) {
             const event = new MouseEvent('contextmenu', {
               bubbles: true,
               cancelable: true,
               view: window,
               button: 2,
+              clientX: currentCursorX,
+              clientY: currentCursorY,
             });
             element.dispatchEvent(event);
           }
@@ -131,13 +143,15 @@ const GestureControl = () => {
 
         if (leftClickEngaged && !leftClickStateRef.current) {
           // Left click - trigger click event
-          const element = document.elementFromPoint(cursorPosition.x, cursorPosition.y);
+          const element = document.elementFromPoint(currentCursorX, currentCursorY);
           if (element) {
             const event = new MouseEvent('click', {
               bubbles: true,
               cancelable: true,
               view: window,
               button: 0,
+              clientX: currentCursorX,
+              clientY: currentCursorY,
             });
             element.dispatchEvent(event);
           }
@@ -145,19 +159,6 @@ const GestureControl = () => {
         } else if (!leftClickEngaged) {
           leftClickStateRef.current = false;
         }
-
-        // Draw hand landmarks (optional, for debugging)
-        // You can uncomment this to see hand tracking visualization
-        /*
-        for (const landmark of handLandmarks) {
-          const x = landmark.x * canvasRef.current.width;
-          const y = landmark.y * canvasRef.current.height;
-          canvasCtx.fillStyle = '#00FF00';
-          canvasCtx.beginPath();
-          canvasCtx.arc(x, y, 5, 0, 2 * Math.PI);
-          canvasCtx.fill();
-        }
-        */
       }
     } else {
       setIsVisible(false);
@@ -167,7 +168,22 @@ const GestureControl = () => {
   }, [cursorPosition]);
 
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive) {
+      // Reset states when stopping
+      smoothedPositionRef.current = { x: null, y: null };
+      prevPositionRef.current = { x: 0, y: 0 };
+      setIsVisible(false);
+      if (cameraRef.current) {
+        cameraRef.current.stop();
+        cameraRef.current = null;
+      }
+      return;
+    }
+
+    if (!videoRef.current) {
+      console.error('Video element not available');
+      return;
+    }
 
     const hands = new Hands({
       locateFile: (file) => {
@@ -178,7 +194,7 @@ const GestureControl = () => {
     hands.setOptions({
       maxNumHands: 1,
       modelComplexity: 1,
-      minDetectionConfidence: 0.8,
+      minDetectionConfidence: 0.7, // Slightly lowered for better detection
       minTrackingConfidence: 0.5,
     });
 
@@ -186,7 +202,7 @@ const GestureControl = () => {
 
     const camera = new Camera(videoRef.current, {
       onFrame: async () => {
-        if (videoRef.current) {
+        if (videoRef.current && videoRef.current.readyState === 4) {
           await hands.send({ image: videoRef.current });
         }
       },
@@ -194,7 +210,9 @@ const GestureControl = () => {
       height: 480,
     });
 
-    camera.start();
+    camera.start().catch((error) => {
+      console.error('Camera start error:', error);
+    });
 
     handsRef.current = hands;
     cameraRef.current = camera;
@@ -202,59 +220,29 @@ const GestureControl = () => {
     return () => {
       if (cameraRef.current) {
         cameraRef.current.stop();
+        cameraRef.current = null;
       }
     };
   }, [isActive, onResults]);
 
-  const toggleGestureControl = () => {
-    setIsActive(!isActive);
-    if (!isActive) {
-      // Reset states when starting
-      smoothedPositionRef.current = { x: null, y: null };
-      prevPositionRef.current = { x: 0, y: 0 };
-      setIsVisible(false);
-    }
-  };
-
   return (
     <>
-      {/* Toggle Button */}
-      <button
-        onClick={toggleGestureControl}
-        className={`
-          fixed
-          top-8
-          right-8
-          z-[100]
-          px-4
-          py-2
-          rounded-xl
-          border
-          border-apple-gray-200
-          bg-white
-          shadow-lg
-          transition-all
-          duration-300
-          hover:shadow-xl
-          hover:scale-105
-          ${isActive ? 'bg-apple-gray-900 text-white border-apple-gray-900' : 'text-apple-gray-900'}
-        `}
-        aria-label={isActive ? 'Disable gesture control' : 'Enable gesture control'}
-      >
-        <span className="text-sm font-medium">
-          {isActive ? '🖐️ Stop Gestures' : '👋 Start Gestures'}
-        </span>
-      </button>
-
-      {/* Video and Canvas (hidden) */}
+      {/* Video and Canvas (hidden but accessible) */}
       {isActive && (
-        <div className="fixed top-0 left-0 w-0 h-0 overflow-hidden pointer-events-none">
+        <div className="fixed top-0 left-0 w-1 h-1 overflow-hidden pointer-events-none opacity-0">
           <video
             ref={videoRef}
             className="transform scale-x-[-1]"
             autoPlay
             playsInline
-            style={{ display: 'none' }}
+            muted
+            style={{ 
+              width: '1px',
+              height: '1px',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+            }}
           />
           <canvas
             ref={canvasRef}
@@ -285,4 +273,3 @@ const GestureControl = () => {
 };
 
 export default GestureControl;
-

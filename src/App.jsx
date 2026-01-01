@@ -21,7 +21,7 @@ const mainProjects = [
   {
     id: 2,
     title: 'Revise',
-    description: 'Mobile app used to ',
+    description: 'Mobile app Meant to help anyone learn through constant repetition',
     size: 'medium',
     demos: [
       { icon: '✅', title: 'Task Board', description: 'Kanban-style task organization' },
@@ -51,7 +51,7 @@ const mainProjects = [
   },
   {
     id: 5,
-    title: 'Music Player',
+    title: 'Cloud classification model',
     description: 'Modern music player with playlist management',
     size: 'medium',
     demos: [
@@ -95,6 +95,7 @@ const additionalProjects = [
 function App() {
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [showTechStack, setShowTechStack] = useState(false);
+  const [isGestureActive, setIsGestureActive] = useState(false);
 
   // Show tech stack after 3 seconds
   useEffect(() => {
@@ -107,14 +108,14 @@ function App() {
 
   // Tech stack logos
   const techStack = [
-    { name: 'React', icon: '⚛️' },
-    { name: 'Python', icon: '🐍' },
-    { name: 'JavaScript', icon: '🟨' },
-    { name: 'TypeScript', icon: '🔷' },
-    { name: 'Node.js', icon: '🟢' },
-    { name: 'TensorFlow', icon: '🧠' },
-    { name: 'PyTorch', icon: '🔥' },
-    { name: 'Git', icon: '📦' },
+    { name: 'React', icon: '' },
+    { name: 'Python', icon: '' },
+    { name: 'JavaScript', icon: '' },
+    { name: 'TypeScript', icon: '' },
+    { name: 'Node.js', icon: '' },
+    { name: 'TensorFlow', icon: '' },
+    { name: 'PyTorch', icon: '' },
+    { name: 'Git', icon: '' },
   ];
 
   const internships = [
@@ -233,11 +234,49 @@ function App() {
               }}
             >
               {/* Top Half - Gesture Control */}
-              <div className="flex-1 flex items-center justify-center">
-                <div className="w-full h-full bg-apple-gray-50 rounded-2xl border border-apple-gray-200 flex items-center justify-center p-6 sm:p-8 transition-all duration-300 hover:bg-white hover:shadow-lg hover:border-apple-gray-300">
-                  <span className="text-lg sm:text-xl font-medium text-apple-gray-700">
-                    Inspect if you dare !!
-                  </span>
+              <div className="flex-1 flex items-center justify-center group cursor-pointer">
+                <div className="w-full h-full rounded-2xl transition-all duration-500 opacity-0 group-hover:opacity-100 flex gap-3 sm:gap-4">
+                  {/* Left Side - Image Placeholder */}
+                  <div className="flex-1 bg-apple-gray-50 rounded-xl border border-apple-gray-200 flex items-center justify-center overflow-hidden transition-all duration-300 hover:bg-white hover:shadow-lg">
+                    {/* Image will go here */}
+                    <div className="text-apple-gray-400 text-sm">Image</div>
+                  </div>
+                  
+                  {/* Right Side - Gesture Control Button */}
+                  <div className="flex-1">
+                    <div className="flex flex-col items-center justify-center h-full">
+                      {/* Potential space for text above the button */}
+                      <div className="mb-4 text-center text-apple-gray-700 font-semibold transition-all duration-300 hover:text-apple-gray-900">
+                        you can also control the cursor on this page with your hand gestures <br/> Constantly hold index+thumb to move the cursor <br/> add your middle to and return it to click and your ring to right click <br/>  
+                      </div> 
+                      <button
+                        onClick={() => setIsGestureActive(!isGestureActive)}
+                        className={`
+                          rounded-xl
+                          border
+                          border-apple-gray-200
+                          bg-white
+                          shadow-lg
+                          transition-all
+                          duration-300
+                          hover:shadow-xl
+                          hover:scale-[1.02]
+                          flex
+                          items-center
+                          justify-center
+                          px-8
+                          py-4
+                          ${isGestureActive ? 'bg-apple-gray-900 text-white border-apple-gray-900' : 'text-apple-gray-900'}
+                        `}
+                        aria-label={isGestureActive ? 'Disable gesture control' : 'Enable gesture control'}
+                        style={{ minWidth: '180px' }}
+                      >
+                        <span className="text-sm sm:text-base font-medium">
+                          {isGestureActive ? '🖐️ Stop Gestures' : '👋 Start Gestures'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -324,7 +363,7 @@ function App() {
       <ScrollIndicator />
 
       {/* Gesture Control */}
-      <GestureControl />
+      <GestureControl isActive={isGestureActive} onToggle={() => setIsGestureActive(!isGestureActive)} />
 
       {/* Contact Page */}
       <ContactPage />
