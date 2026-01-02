@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Hands } from '@mediapipe/hands';
 import { Camera } from '@mediapipe/camera_utils';
 
-const GestureControl = ({ isActive, onToggle }) => {
+const GestureControl = ({ isActive, onToggle, videoContainerElement = null }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const handsRef = useRef(null);
@@ -393,16 +394,36 @@ const GestureControl = ({ isActive, onToggle }) => {
       {isActive && (
         <button
           onClick={() => setShowDebugWindow(!showDebugWindow)}
-          className="fixed top-4 right-4 z-[100] bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg font-semibold transition-colors"
+          className="fixed top-4 right-4 z-[250] bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg font-semibold transition-colors"
           title="Toggle Debug Window"
         >
           {showDebugWindow ? 'Hide Debug' : 'Show Debug'}
         </button>
       )}
 
-      {/* Video and Canvas */}
-      {isActive && (
-        <div className={showDebugWindow ? "fixed top-20 right-4 z-[99] bg-black rounded-lg shadow-2xl p-2 relative" : "fixed top-0 left-0 w-1 h-1 overflow-hidden pointer-events-none opacity-0"}>
+      {/* Video and Canvas - Render in custom location via portal if provided */}
+      {isActive && videoContainerElement && createPortal(
+        <div className={`w-full h-full relative bg-black rounded-xl overflow-hidden ${showDebugWindow ? '' : 'opacity-0 pointer-events-none'}`}>
+          <video
+            ref={videoRef}
+            className="transform scale-x-[-1] w-full h-full object-cover"
+            autoPlay
+            playsInline
+            muted
+          />
+          <canvas
+            ref={canvasRef}
+            width={640}
+            height={480}
+            className="absolute top-0 left-0 w-full h-full transform scale-x-[-1] pointer-events-none"
+          />
+        </div>,
+        videoContainerElement
+      )}
+      
+      {/* Default fixed position video display */}
+      {isActive && !videoContainerElement && (
+        <div className={showDebugWindow ? "fixed top-20 right-4 z-[250] bg-black rounded-lg shadow-2xl p-2 relative" : "fixed top-0 left-0 w-1 h-1 overflow-hidden pointer-events-none opacity-0"}>
           <video
             ref={videoRef}
             className={showDebugWindow ? "transform scale-x-[-1] rounded block" : "transform scale-x-[-1]"}
@@ -435,8 +456,8 @@ const GestureControl = ({ isActive, onToggle }) => {
       )}
 
       {/* Debug Info Panel */}
-      {isActive && showDebugWindow && (
-        <div className="fixed top-20 right-[360px] z-[99] bg-gray-900 text-white p-4 rounded-lg shadow-2xl font-mono text-sm min-w-[250px]">
+      {/* {isActive && showDebugWindow && (
+        <div className="fixed top-20 right-[360px] z-[250] bg-gray-900 text-white p-4 rounded-lg shadow-2xl font-mono text-sm min-w-[250px]">
           <h3 className="text-lg font-bold mb-3 text-blue-400">Debug Info</h3>
           <div className="space-y-2">
             <div>
@@ -500,12 +521,12 @@ const GestureControl = ({ isActive, onToggle }) => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Virtual Cursor */}
       {isActive && isVisible && (
         <div
-          className="fixed pointer-events-none z-[99] transition-all duration-100 ease-out"
+          className="fixed pointer-events-none z-[250] transition-all duration-100 ease-out"
           style={{
             left: `${cursorPosition.x}px`,
             top: `${cursorPosition.y}px`,

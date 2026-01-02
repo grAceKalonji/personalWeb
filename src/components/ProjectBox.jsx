@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import FolderIcon from './FolderIcon';
 
-const ProjectBox = ({ project, size = 'medium', showAllProjects = false, staggerDelay = 0 }) => {
+const ProjectBox = ({ project, size = 'medium', showAllProjects = false, staggerDelay = 0, onExpand }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isVisible, setIsVisible] = useState(!showAllProjects);
@@ -61,6 +61,17 @@ const ProjectBox = ({ project, size = 'medium', showAllProjects = false, stagger
     setCurrentSlide(0);
   };
 
+  const handleClick = (e) => {
+    e.stopPropagation();
+    console.log('ProjectBox clicked', project.title);
+    if (onExpand) {
+      console.log('Calling onExpand');
+      onExpand();
+    } else {
+      console.log('onExpand is not defined');
+    }
+  };
+
   return (
     <div
       className={`
@@ -88,6 +99,7 @@ const ProjectBox = ({ project, size = 'medium', showAllProjects = false, stagger
       `}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
     >
       {/* Folder Icon */}
       <div
@@ -152,6 +164,7 @@ const ProjectBox = ({ project, size = 'medium', showAllProjects = false, stagger
             fade-in
             duration-300
           "
+          onClick={handleClick}
         >
           <div className="relative w-full h-full flex items-center justify-center">
             {project.demos.map((demo, index) => (

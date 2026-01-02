@@ -1,21 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ProjectBox from './components/ProjectBox';
 import ScrollIndicator from './components/ScrollIndicator';
 import ContactPage from './components/ContactPage';
 import FolderIcon from './components/FolderIcon';
 import GestureControl from './components/GestureControl';
+import pipelineImage from './assets/Images/Adhd/pipeline.png';
 
 // Main featured projects (5) - clustered in center
 const mainProjects = [
   {
     id: 1,
-    title: 'ADHD Classificaion model',
-    description: 'Lightweight model that uses EEG signals to help diagnose ADHD',
+    title: 'ADHD Classification',
+    description: 'Built a lightweight, two-staged model that uses EEG signals to help diagnose ADHD',
     size: 'large',
+    details: 
+    <>
+      <b>Problem:</b>
+      <br />
+      Over the past two decades, rates of ADHD diagnosis have risen significantly. Despite this rise, <u>ADHD screening methods remain almost entirely clinical, this increases diagnostic burden and creates a need for more objective, data driven tools. </u> While research has been done on utilizing physiological data to diagnose patients, there still remains much room for improvement.
+      <br />
+      <br />
+      <b>Approach:</b>
+      <br />
+      Using a dataset of preprocessed EEG-derived feature vectors from Kaggle, I implemented a lightweight, teacher–student deep learning pipeline for 3 different models: 
+      <br /> 
+      - A small 1D ResNet model 
+      <br /> 
+      - A transformer model 
+      <br /> 
+      - A eegnet model. <br /> 
+      All these were trained as a “teacher” to identify discriminative EEG features using gradient-based saliency. These saliency maps were then used to filter low-importance features, and the resulting masked data was evaluated using EEGNet, a compact architecture designed for EEG classification. They all shared the same student architecture (EEGNet). Performance was compared against the masked data and the unfiltered data.
+    </>,
     demos: [
-      { icon: '🛒', title: 'Shopping Cart', description: 'Seamless checkout experience' },
-      { icon: '💳', title: 'Payment Processing', description: 'Secure payment integration' },
-      { icon: '📊', title: 'Analytics Dashboard', description: 'Real-time sales analytics' },
+      { icon: '🧠', title: 'EEG Signal Processing', description: 'Advanced signal processing and feature extraction from EEG data' },
+      { icon: '🤖', title: 'ML Model Training', description: 'Training and optimization of classification models' },
+      { icon: '📊', title: 'Results Visualization', description: 'Interactive dashboards for viewing diagnostic results' },
     ],
   },
   {
@@ -41,7 +60,7 @@ const mainProjects = [
   },
   {
     id: 4,
-    title: 'Fitness Tracker',
+    title: 'Tracker',
     description: 'Personal fitness tracking with workout plans',
     size: 'medium',
     demos: [
@@ -96,6 +115,8 @@ function App() {
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [showTechStack, setShowTechStack] = useState(false);
   const [isGestureActive, setIsGestureActive] = useState(false);
+  const [expandedProject, setExpandedProject] = useState(null);
+  const videoContainerRef = useRef(null);
 
   // Show tech stack after 3 seconds
   useEffect(() => {
@@ -112,7 +133,6 @@ function App() {
     { name: 'React', icon: '' },
     { name: 'Python', icon: '' },
     { name: 'JavaScript', icon: '' },
-    { name: 'TypeScript', icon: '' },
     { name: 'Node.js', icon: '' },
     { name: 'TensorFlow', icon: '' },
     { name: 'PyTorch', icon: '' },
@@ -135,7 +155,7 @@ function App() {
           <div className={`w-full transition-all duration-1000 ease-out ${showTechStack ? 'text-left' : 'text-center'}`}>
             <div className={`transition-all duration-1000 ease-out ${showTechStack ? 'max-w-full' : 'max-w-4xl mx-auto'}`}>
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold text-apple-gray-900 mb-4 sm:mb-6 leading-tight">
-                Grace Kalonji
+                Mars Kal
                 <br />
                 <span className="text-apple-gray-600">Projects</span>
               </h1>
@@ -250,10 +270,14 @@ function App() {
               {/* Bottom Half - Gesture Control */}
               <div className="flex-1 flex items-center justify-center group cursor-pointer">
                 <div className="w-full h-full rounded-2xl transition-all duration-500 opacity-0 group-hover:opacity-100 flex gap-3 sm:gap-4">
-                  {/* Left Side - Image Placeholder */}
-                  <div className="flex-1 bg-apple-gray-50 rounded-xl flex items-center justify-center overflow-hidden transition-all duration-300">
-                    {/* Image will go here */}
-                    <div className="text-apple-gray-400 text-sm">Image</div>
+                  {/* Left Side - Video Feed Container */}
+                  <div 
+                    ref={videoContainerRef}
+                    className="flex-1 bg-apple-gray-50 rounded-xl flex items-center justify-center overflow-hidden transition-all duration-300"
+                  >
+                    {!isGestureActive && (
+                      <div className="text-apple-gray-400 text-sm">Image</div>
+                    )}
                   </div>
                   
                   {/* Right Side - Gesture Control Button */}
@@ -261,7 +285,10 @@ function App() {
                     <div className="flex flex-col items-center justify-center h-full">
                       {/* Potential space for text above the button */}
                       <div className="mb-4 text-center text-apple-gray-700 font-semibold transition-all duration-300 hover:text-apple-gray-900">
-                        you can also control the cursor on this page with your hand gestures <br/> Constantly hold index+thumb to move the cursor <br/> add your middle to and return it to click and your ring to right click <br/>  
+                        You can also control the cursor on this page with your hand gestures <br/>   
+                      </div> 
+                      <div className="mb-4 text-center text-apple-gray-700 font transition-all duration-300 hover:text-apple-gray-900">
+                        Constantly hold index+thumb to move the cursor <br/> add your middle to and return it to click and your ring to right click <br/>  
                       </div> 
                       <button
                         onClick={() => setIsGestureActive(!isGestureActive)}
@@ -280,13 +307,13 @@ function App() {
                           justify-center
                           px-8
                           py-4
-                          ${isGestureActive ? 'bg-apple-gray-900 text-white border-apple-gray-900' : 'text-apple-gray-900'}
+                          ${isGestureActive ? 'bg-apple-gray-900 text-black border-apple-gray-900' : 'text-apple-gray-900'}
                         `}
                         aria-label={isGestureActive ? 'Disable gesture control' : 'Enable gesture control'}
                         style={{ minWidth: '180px' }}
                       >
                         <span className="text-sm sm:text-base font-medium">
-                          {isGestureActive ? '🖐️ Stop Gestures' : '👋 Start Gestures'}
+                          {isGestureActive ? ' Stop Gestures' : ' Start Gestures'}
                         </span>
                       </button>
                     </div>
@@ -328,6 +355,7 @@ function App() {
               size={showAllProjects ? 'square' : project.size}
               showAllProjects={showAllProjects}
               staggerDelay={showAllProjects ? index * 50 : 0}
+              onExpand={() => setExpandedProject(project)}
             />
           ))}
         </div>
@@ -373,10 +401,184 @@ function App() {
       <ScrollIndicator />
 
       {/* Gesture Control */}
-      <GestureControl isActive={isGestureActive} onToggle={() => setIsGestureActive(!isGestureActive)} />
+      <GestureControl 
+        isActive={isGestureActive} 
+        onToggle={() => setIsGestureActive(!isGestureActive)}
+        videoContainerElement={videoContainerRef.current}
+      />
 
       {/* Contact Page */}
       <ContactPage />
+
+      {/* Expanded Project View */}
+      {expandedProject && (
+        <div
+          className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center p-[60px]"
+          onClick={() => setExpandedProject(null)}
+        >
+          <div
+            className="
+              w-full
+              h-full
+              bg-white
+              rounded-3xl
+              border
+              border-apple-gray-200
+              shadow-2xl
+              overflow-hidden
+              flex
+              flex-col
+              relative
+              animate-fade-in-scale
+            "
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setExpandedProject(null)}
+              className="
+                absolute
+                top-6
+                right-6
+                z-10
+                w-10
+                h-10
+                rounded-full
+                bg-apple-gray-100
+                hover:bg-apple-gray-200
+                border
+                border-apple-gray-200
+                flex
+                items-center
+                justify-center
+                transition-all
+                duration-200
+                hover:scale-110
+                group
+              "
+              aria-label="Close project view"
+            >
+              <svg
+                className="w-5 h-5 text-apple-gray-700 group-hover:text-apple-gray-900"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+
+            {/* Header */}
+            <div className="p-8 sm:p-12 border-b border-apple-gray-200">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <FolderIcon className="w-12 h-12 sm:w-16 sm:h-16 text-apple-gray-700" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-3xl sm:text-4xl font-semibold text-apple-gray-900 mb-3">
+                    {expandedProject.title}
+                  </h2>
+                  <p className="text-lg text-apple-gray-600">
+                    {expandedProject.description}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content Area */}
+            <div className="flex-1 overflow-y-auto p-8 sm:p-12">
+              <div className="max-w-4xl mx-auto space-y-8">
+                {/* Project Details Section */}
+                <div>
+                  <h3 className="text-2xl font-semibold text-apple-gray-900 mb-4">
+                    Project Overview
+                  </h3>
+                  <div className="bg-apple-gray-50 rounded-2xl p-6 border border-apple-gray-200">
+                    <p className="text-apple-gray-700 leading-relaxed">
+                      {expandedProject.details || 'Project details coming soon...'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Features/Demos Section */}
+                {expandedProject.demos && expandedProject.demos.length > 0 && (
+                  <div>
+                    <h3 className="text-2xl font-semibold text-apple-gray-900 mb-4">
+                      Pipeline
+                    </h3>
+                    
+                    {/* Pipeline Image */}
+                    {expandedProject.id === 1 && (
+                      <div className="mb-6 rounded-xl overflow-hidden border border-apple-gray-200 bg-apple-gray-50">
+                        <img
+                          src={pipelineImage}
+                          alt="ADHD Classification Pipeline"
+                          className="w-full h-full"
+                        />
+                      </div>
+                    )}
+                    <h3 className="text-2xl font-semibold text-apple-gray-900 mb-4">
+                      Results
+                    </h3>
+                    <div>
+                      <p className="text-apple-gray-600"> The best results came from the transformer-Teacher, EEgnet-Student pipeline with an accuracy of 81% </p>
+
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {expandedProject.demos.map((demo, index) => (
+                        <div
+                          key={index}
+                          className="
+                            bg-apple-gray-50
+                            rounded-xl
+                            p-6
+                            border
+                            border-apple-gray-200
+                            transition-all
+                            duration-300
+                            hover:bg-white
+                            hover:shadow-lg
+                            hover:border-apple-gray-300
+                            hover:-translate-y-1
+                          "
+                        >
+                          <div className="text-4xl mb-3">{demo.icon}</div>
+                          <h4 className="text-lg font-semibold text-apple-gray-900 mb-2">
+                            {demo.title}
+                          </h4>
+                          {demo.description && (
+                            <p className="text-sm text-apple-gray-600">
+                              {demo.description}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Additional Information */}
+                <div>
+                  <h3 className="text-2xl font-semibold text-apple-gray-900 mb-4">
+                    Additional Information
+                  </h3>
+                  <div className="bg-apple-gray-50 rounded-2xl p-6 border border-apple-gray-200">
+                    <p className="text-apple-gray-600">
+                      More project information will be displayed here.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
