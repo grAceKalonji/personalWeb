@@ -108,6 +108,7 @@ function App() {
 
   // Tech stack logos
   const techStack = [
+    { name: 'Model Development', icon: '' },
     { name: 'React', icon: '' },
     { name: 'Python', icon: '' },
     { name: 'JavaScript', icon: '' },
@@ -115,13 +116,14 @@ function App() {
     { name: 'Node.js', icon: '' },
     { name: 'TensorFlow', icon: '' },
     { name: 'PyTorch', icon: '' },
-    { name: 'Git', icon: '' },
+    { name: 'MLOps', icon: '' },
+    { name: 'Data Processing', icon: '' },
   ];
 
   const internships = [
-    { name: 'Fujitsu', icon: '🧠' },
-    { name: 'IBM', icon: '🔥' },
-    { name: 'Cisco', icon: '📦' },
+    { name: 'Incoming', icon: '🧠' },
+    { name: 'Incoming', icon: '🔥' },
+    { name: 'Incoming', icon: '📦' },
   ];
 
   return (
@@ -233,11 +235,23 @@ function App() {
                 transitionDelay: '200ms',
               }}
             >
-              {/* Top Half - Gesture Control */}
+              {/* top half - image of myself */}
+              <div className="flex-1 flex items-center justify-center">
+              <div
+                className="bg-apple-gray-50 rounded-xl border border-apple-gray-200 flex items-center justify-center overflow-hidden transition-all duration-300 hover:bg-white hover:shadow-lg"
+                style={{ width: '290px', height: '290px', minWidth: '290px', minHeight: '290px', maxWidth: '290px', maxHeight: '290px' }}
+              >
+                    {/* Image of myself */}
+              <div className="text-apple-gray-400 text-sm">Image of myself</div>
+              </div>
+              </div>
+
+
+              {/* Bottom Half - Gesture Control */}
               <div className="flex-1 flex items-center justify-center group cursor-pointer">
                 <div className="w-full h-full rounded-2xl transition-all duration-500 opacity-0 group-hover:opacity-100 flex gap-3 sm:gap-4">
                   {/* Left Side - Image Placeholder */}
-                  <div className="flex-1 bg-apple-gray-50 rounded-xl border border-apple-gray-200 flex items-center justify-center overflow-hidden transition-all duration-300 hover:bg-white hover:shadow-lg">
+                  <div className="flex-1 bg-apple-gray-50 rounded-xl flex items-center justify-center overflow-hidden transition-all duration-300">
                     {/* Image will go here */}
                     <div className="text-apple-gray-400 text-sm">Image</div>
                   </div>
@@ -280,10 +294,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Bottom Half - Reserved for future content */}
-              <div className="flex-1 flex items-center justify-center">
-                {/* Add your content here */}
-              </div>
             </div>
           )}
         </div>
