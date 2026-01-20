@@ -2,114 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import ProjectBox from './components/ProjectBox';
 import ScrollIndicator from './components/ScrollIndicator';
 import ContactPage from './components/ContactPage';
-import FolderIcon from './components/FolderIcon';
 import GestureControl from './components/GestureControl';
-import pipelineImage from './assets/Images/Adhd/pipeline.png';
+import ExpandedProjectView from './components/ExpandedProjectView';
+import FolderIcon from './components/FolderIcon';
+import { mainProjects, additionalProjects } from './data/projectsData';
+import graceKalImage from './assets/Images/graceKal.jpg';
 
-// Main featured projects (5) - clustered in center
-const mainProjects = [
-  {
-    id: 1,
-    title: 'ADHD Classification',
-    description: 'Built a lightweight, two-staged model that uses EEG signals to help diagnose ADHD',
-    size: 'large',
-    details: 
-    <>
-      <b>Problem:</b>
-      <br />
-      Over the past two decades, rates of ADHD diagnosis have risen significantly. Despite this rise, <u>ADHD screening methods remain almost entirely clinical, this increases diagnostic burden and creates a need for more objective, data driven tools. </u> While research has been done on utilizing physiological data to diagnose patients, there still remains much room for improvement.
-      <br />
-      <br />
-      <b>Approach:</b>
-      <br />
-      Using a dataset of preprocessed EEG-derived feature vectors from Kaggle, I implemented a lightweight, teacher–student deep learning pipeline for 3 different models: 
-      <br /> 
-      - A small 1D ResNet model 
-      <br /> 
-      - A transformer model 
-      <br /> 
-      - A eegnet model. <br /> 
-      All these were trained as a “teacher” to identify discriminative EEG features using gradient-based saliency. These saliency maps were then used to filter low-importance features, and the resulting masked data was evaluated using EEGNet, a compact architecture designed for EEG classification. They all shared the same student architecture (EEGNet). Performance was compared against the masked data and the unfiltered data.
-    </>,
-    demos: [
-      { icon: '🧠', title: 'EEG Signal Processing', description: 'Advanced signal processing and feature extraction from EEG data' },
-      { icon: '🤖', title: 'ML Model Training', description: 'Training and optimization of classification models' },
-      { icon: '📊', title: 'Results Visualization', description: 'Interactive dashboards for viewing diagnostic results' },
-    ],
-  },
-  {
-    id: 2,
-    title: 'Revise',
-    description: 'Mobile app Meant to help anyone learn through constant repetition',
-    size: 'medium',
-    demos: [
-      { icon: '✅', title: 'Task Board', description: 'Kanban-style task organization' },
-      { icon: '👥', title: 'Team Collaboration', description: 'Real-time team updates' },
-    ],
-  },
-  {
-    id: 3,
-    title: 'Social Media Analytics',
-    description: 'Comprehensive social media insights and reporting',
-    size: 'wide',
-    demos: [
-      { icon: '📈', title: 'Analytics Overview', description: '' },
-      { icon: '📱', title: 'Platform Insights', description: 'Multi-platform analytics' },
-      { icon: '📊', title: 'Engagement Reports', description: 'Detailed engagement metrics' },
-    ],
-  },
-  {
-    id: 4,
-    title: 'Tracker',
-    description: 'Personal fitness tracking with workout plans',
-    size: 'medium',
-    demos: [
-      { icon: '🏃', title: 'Workout Tracking', description: '' },
-      { icon: '📉', title: 'Progress Charts', description: 'Visualize your progress' },
-    ],
-  },
-  {
-    id: 5,
-    title: 'Cloud classification model',
-    description: 'Modern music player with playlist management',
-    size: 'medium',
-    demos: [
-      { icon: '🎵', title: 'Now Playing', description: '' },
-      { icon: '📋', title: 'Playlists', description: 'Create and manage playlists' },
-    ],
-  },
-];
-
-// Additional projects (shown when "View More" is clicked)
-const additionalProjects = [
-  {
-    id: 6,
-    title: 'Privacy Lens',
-    description: 'Determines how safe sites are.',
-    size: 'square',
-    demos: [
-      { icon: '🌤️', title: 'Weather Forecast', description: '7-day weather predictions' },
-    ],
-  },
-  {
-    id: 7,
-    title: 'Recipe Finder',
-    description: 'Discover recipes based on ingredients',
-    size: 'square',
-    demos: [
-      { icon: '🍳', title: 'Recipe Search', description: 'Find recipes by ingredients' },
-    ],
-  },
-  {
-    id: 8,
-    title: 'Portfolio Website',
-    description: 'Personal portfolio with project showcase',
-    size: 'square',
-    demos: [
-      { icon: '💼', title: 'Project Gallery', description: 'Showcase your work' },
-    ],
-  },
-];
 
 function App() {
   const [showAllProjects, setShowAllProjects] = useState(false);
@@ -141,10 +39,11 @@ function App() {
   ];
 
   const internships = [
-    { name: 'Incoming', icon: '🧠' },
-    { name: 'Incoming', icon: '🔥' },
-    { name: 'Incoming', icon: '📦' },
+    { name: 'Incoming', icon: '' },
+    { name: 'Incoming', icon: '' },
+    { name: 'Incoming', icon: '' },
   ];
+
 
   return (
     <div className="min-h-screen bg-white">
@@ -155,7 +54,7 @@ function App() {
           <div className={`w-full transition-all duration-1000 ease-out ${showTechStack ? 'text-left' : 'text-center'}`}>
             <div className={`transition-all duration-1000 ease-out ${showTechStack ? 'max-w-full' : 'max-w-4xl mx-auto'}`}>
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold text-apple-gray-900 mb-4 sm:mb-6 leading-tight">
-                Mars Kal
+                Grace Kalonji
                 <br />
                 <span className="text-apple-gray-600">Projects</span>
               </h1>
@@ -179,7 +78,7 @@ function App() {
               `}
             >
               <h2 className="text-sm font-medium text-apple-gray-500 mb-4 uppercase tracking-wide mb-3">
-                Internships with: 
+                Interend with: 
               </h2>
               <div className="flex flex-wrap gap-4 sm:gap-6 mb-8">  
                 {internships.map((internship, index) => (
@@ -261,8 +160,13 @@ function App() {
                 className="bg-apple-gray-50 rounded-xl border border-apple-gray-200 flex items-center justify-center overflow-hidden transition-all duration-300 hover:bg-white hover:shadow-lg"
                 style={{ width: '290px', height: '290px', minWidth: '290px', minHeight: '290px', maxWidth: '290px', maxHeight: '290px' }}
               >
-                    {/* Image of myself */}
-              <div className="text-apple-gray-400 text-sm">Image of myself</div>
+              {/* Image of myself */}
+              <img
+                src={graceKalImage}
+                alt="Portrait of Myself"
+                className="w-full h-full object-cover rounded-xl"
+                style={{ minWidth: '290px', minHeight: '290px', maxWidth: '290px', maxHeight: '290px' }}
+              />
               </div>
               </div>
 
@@ -274,6 +178,10 @@ function App() {
                   <div 
                     ref={videoContainerRef}
                     className="flex-1 bg-apple-gray-50 rounded-xl flex items-center justify-center overflow-hidden transition-all duration-300"
+                    style={{
+                      aspectRatio: '4/3', // Maintain video aspect ratio to prevent distortion
+                      maxHeight: '100%',
+                    }}
                   >
                     {!isGestureActive && (
                       <div className="text-apple-gray-400 text-sm">Image</div>
@@ -412,172 +320,10 @@ function App() {
 
       {/* Expanded Project View */}
       {expandedProject && (
-        <div
-          className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center p-[60px]"
-          onClick={() => setExpandedProject(null)}
-        >
-          <div
-            className="
-              w-full
-              h-full
-              bg-white
-              rounded-3xl
-              border
-              border-apple-gray-200
-              shadow-2xl
-              overflow-hidden
-              flex
-              flex-col
-              relative
-              animate-fade-in-scale
-            "
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close Button */}
-            <button
-              onClick={() => setExpandedProject(null)}
-              className="
-                absolute
-                top-6
-                right-6
-                z-10
-                w-10
-                h-10
-                rounded-full
-                bg-apple-gray-100
-                hover:bg-apple-gray-200
-                border
-                border-apple-gray-200
-                flex
-                items-center
-                justify-center
-                transition-all
-                duration-200
-                hover:scale-110
-                group
-              "
-              aria-label="Close project view"
-            >
-              <svg
-                className="w-5 h-5 text-apple-gray-700 group-hover:text-apple-gray-900"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-
-            {/* Header */}
-            <div className="p-8 sm:p-12 border-b border-apple-gray-200">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0">
-                  <FolderIcon className="w-12 h-12 sm:w-16 sm:h-16 text-apple-gray-700" />
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-3xl sm:text-4xl font-semibold text-apple-gray-900 mb-3">
-                    {expandedProject.title}
-                  </h2>
-                  <p className="text-lg text-apple-gray-600">
-                    {expandedProject.description}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Content Area */}
-            <div className="flex-1 overflow-y-auto p-8 sm:p-12">
-              <div className="max-w-4xl mx-auto space-y-8">
-                {/* Project Details Section */}
-                <div>
-                  <h3 className="text-2xl font-semibold text-apple-gray-900 mb-4">
-                    Project Overview
-                  </h3>
-                  <div className="bg-apple-gray-50 rounded-2xl p-6 border border-apple-gray-200">
-                    <p className="text-apple-gray-700 leading-relaxed">
-                      {expandedProject.details || 'Project details coming soon...'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Features/Demos Section */}
-                {expandedProject.demos && expandedProject.demos.length > 0 && (
-                  <div>
-                    <h3 className="text-2xl font-semibold text-apple-gray-900 mb-4">
-                      Pipeline
-                    </h3>
-                    
-                    {/* Pipeline Image */}
-                    {expandedProject.id === 1 && (
-                      <div className="mb-6 rounded-xl overflow-hidden border border-apple-gray-200 bg-apple-gray-50">
-                        <img
-                          src={pipelineImage}
-                          alt="ADHD Classification Pipeline"
-                          className="w-full h-full"
-                        />
-                      </div>
-                    )}
-                    <h3 className="text-2xl font-semibold text-apple-gray-900 mb-4">
-                      Results
-                    </h3>
-                    <div>
-                      <p className="text-apple-gray-600"> The best results came from the transformer-Teacher, EEgnet-Student pipeline with an accuracy of 81% </p>
-
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {expandedProject.demos.map((demo, index) => (
-                        <div
-                          key={index}
-                          className="
-                            bg-apple-gray-50
-                            rounded-xl
-                            p-6
-                            border
-                            border-apple-gray-200
-                            transition-all
-                            duration-300
-                            hover:bg-white
-                            hover:shadow-lg
-                            hover:border-apple-gray-300
-                            hover:-translate-y-1
-                          "
-                        >
-                          <div className="text-4xl mb-3">{demo.icon}</div>
-                          <h4 className="text-lg font-semibold text-apple-gray-900 mb-2">
-                            {demo.title}
-                          </h4>
-                          {demo.description && (
-                            <p className="text-sm text-apple-gray-600">
-                              {demo.description}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Additional Information */}
-                <div>
-                  <h3 className="text-2xl font-semibold text-apple-gray-900 mb-4">
-                    Additional Information
-                  </h3>
-                  <div className="bg-apple-gray-50 rounded-2xl p-6 border border-apple-gray-200">
-                    <p className="text-apple-gray-600">
-                      More project information will be displayed here.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ExpandedProjectView 
+          project={expandedProject} 
+          onClose={() => setExpandedProject(null)} 
+        />
       )}
     </div>
   );

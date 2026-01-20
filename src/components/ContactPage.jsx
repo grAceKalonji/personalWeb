@@ -79,7 +79,7 @@ const ContactPage = () => {
               </div>
               <div>
                 <h3 className="text-sm font-medium text-apple-gray-500 mb-1">Email</h3>
-                <p className="text-lg font-medium text-apple-gray-900">Grace k</p>
+                <p className="text-lg font-medium text-apple-gray-900">Fasest way to reach me</p>
               </div>
             </div>
           </a>
@@ -116,7 +116,7 @@ const ContactPage = () => {
               </div>
               <div>
                 <h3 className="text-sm font-medium text-apple-gray-500 mb-1">GitHub</h3>
-                <p className="text-lg font-medium text-apple-gray-900">grAce kal</p>
+                <p className="text-lg font-medium text-apple-gray-900"></p>
               </div>
             </div>
           </a>

@@ -10,16 +10,6 @@ const GestureControl = ({ isActive, onToggle, videoContainerElement = null }) =>
   const cameraRef = useRef(null);
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
   const [isVisible, setIsVisible] = useState(false);
-  const [showDebugWindow, setShowDebugWindow] = useState(false);
-  const [debugInfo, setDebugInfo] = useState({
-    pinchDistance: 0,
-    rightClickDistance: 0,
-    leftClickDistance: 0,
-    cursorControl: false,
-    rightClickEngaged: false,
-    leftClickEngaged: false,
-    handDetected: false,
-  });
 
   // State for gesture detection
   const prevPositionRef = useRef({ x: 0, y: 0 });
@@ -28,6 +18,13 @@ const GestureControl = ({ isActive, onToggle, videoContainerElement = null }) =>
   const leftClickStateRef = useRef(false);
   const handLostTimeoutRef = useRef(null);
   const lastHandDetectedRef = useRef(false);
+  
+  // Scroll gesture state
+  const scrollStateRef = useRef({
+    isActive: false,
+    scrollSpeed: 0,
+    lastUpdateTime: null,
+  });
 
   // Constants (matching your notebook)
   // Note: Dead zone is in screen pixels, thresholds are in video pixels
@@ -36,7 +33,87 @@ const GestureControl = ({ isActive, onToggle, videoContainerElement = null }) =>
   const pinchThreshold = 50; // Video pixel distance for pinch
   const clickThreshold = 40; // Video pixel distance for clicks
   const leftClickThreshold = 50; // Video pixel distance for left click
+  const scrollEngageThreshold = 50; // Video pixel distance for middle+thumb pinch (scroll mode)
+  const scrollSpeed = 15; // Pixels per frame for scrolling
+  const scrollSlowdownThreshold = 0.3; // Index finger X offset threshold for slowing down (normalized)
   const sensitivity = 1.0; // Can adjust if needed
+
+  // Helper function to find scrollable modal container
+  const findScrollableModalContainer = () => {
+    // First, try to find elements with overflow-y-auto that are visible and likely in a modal
+    const scrollableElements = document.querySelectorAll('[class*="overflow-y-auto"], [class*="overflow-auto"]');
+    
+    for (const element of scrollableElements) {
+      const style = window.getComputedStyle(element);
+      const hasOverflow = 
+        style.overflowY === 'auto' || 
+        style.overflowY === 'scroll' || 
+        style.overflow === 'auto' || 
+        style.overflow === 'scroll';
+      
+      // Check if element is actually scrollable
+      if (hasOverflow && element.scrollHeight > element.clientHeight) {
+        // Check if this element is within a modal (parent with high z-index)
+        let parent = element.parentElement;
+        let depth = 0;
+        const maxDepth = 5;
+        
+        while (parent && depth < maxDepth) {
+          const parentStyle = window.getComputedStyle(parent);
+          const zIndex = parseInt(parentStyle.zIndex, 10);
+          
+          // Check if parent is a modal (high z-index and fixed/absolute positioning)
+          if (zIndex >= 200 && (parentStyle.position === 'fixed' || parentStyle.position === 'absolute')) {
+            // Check if element is visible (not hidden)
+            if (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0') {
+              return element;
+            }
+          }
+          
+          parent = parent.parentElement;
+          depth++;
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  // Helper function to find the nearest scrollable parent element
+  const findScrollableParent = (element) => {
+    if (!element) return null;
+    
+    let current = element;
+    let maxDepth = 10; // Prevent infinite loops
+    let depth = 0;
+    
+    while (current && depth < maxDepth) {
+      // Skip body and html elements
+      if (current === document.body || current === document.documentElement) {
+        current = current.parentElement;
+        depth++;
+        continue;
+      }
+      
+      const style = window.getComputedStyle(current);
+      const hasOverflow = 
+        style.overflowY === 'auto' || 
+        style.overflowY === 'scroll' || 
+        style.overflow === 'auto' || 
+        style.overflow === 'scroll';
+      
+      const isScrollable = hasOverflow && (current.scrollHeight > current.clientHeight);
+      
+      if (isScrollable) {
+        return current;
+      }
+      
+      current = current.parentElement;
+      depth++;
+    }
+    
+    return null;
+  }
 
   // Helper function to draw hand connections
   const drawConnections = (ctx, landmarks, width, height) => {
@@ -85,8 +162,8 @@ const GestureControl = ({ isActive, onToggle, videoContainerElement = null }) =>
     if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
       lastHandDetectedRef.current = true;
       
-      // Draw hand landmarks and connections for debugging
-      if (showDebugWindow) {
+      // Draw hand landmarks and connections when video container is provided
+      if (videoContainerElement) {
         for (const handLandmarks of results.multiHandLandmarks) {
           // Draw connections
           drawConnections(canvasCtx, handLandmarks, results.image.width, results.image.height);
@@ -111,12 +188,14 @@ const GestureControl = ({ isActive, onToggle, videoContainerElement = null }) =>
 
         // MediaPipe Hands landmark indices
         const INDEX_FINGER_TIP = 8;
+        const INDEX_FINGER_MCP = 5; // Index finger base (knuckle)
         const THUMB_TIP = 4;
         const MIDDLE_FINGER_TIP = 12;
         const RING_FINGER_TIP = 16;
 
         // Get landmark positions (normalized 0-1)
         const indexTip = handLandmarks[INDEX_FINGER_TIP];
+        const indexBase = handLandmarks[INDEX_FINGER_MCP];
         const thumbTip = handLandmarks[THUMB_TIP];
         const middleTip = handLandmarks[MIDDLE_FINGER_TIP];
         const ringTip = handLandmarks[RING_FINGER_TIP];
@@ -135,25 +214,16 @@ const GestureControl = ({ isActive, onToggle, videoContainerElement = null }) =>
         const pinchDistance = Math.hypot(indexX - thumbX, indexY - thumbY);
         const rightClickDistance = Math.hypot(middleX - indexX, middleY - indexY);
         const leftClickDistance = Math.hypot(ringX - thumbX, ringY - thumbY);
+        const scrollEngageDistance = Math.hypot(middleX - thumbX, middleY - thumbY); // Middle + thumb distance
 
         // Check gestures
         const cursorControl = pinchDistance < pinchThreshold;
         const rightClickEngaged = rightClickDistance < clickThreshold;
         const leftClickEngaged = leftClickDistance < leftClickThreshold;
+        const scrollModeEngaged = scrollEngageDistance < scrollEngageThreshold && !cursorControl; // Middle+thumb pinched, but not index+thumb
 
-        // Update debug info
-        setDebugInfo({
-          pinchDistance: Math.round(pinchDistance),
-          rightClickDistance: Math.round(rightClickDistance),
-          leftClickDistance: Math.round(leftClickDistance),
-          cursorControl,
-          rightClickEngaged,
-          leftClickEngaged,
-          handDetected: true,
-        });
-
-        // Draw visual indicators on canvas for debugging
-        if (showDebugWindow) {
+        // Draw visual indicators on canvas when video container is provided
+        if (videoContainerElement) {
           // Draw pinch distance line
           canvasCtx.strokeStyle = cursorControl ? '#FF0000' : '#FFFF00';
           canvasCtx.lineWidth = 2;
@@ -175,6 +245,43 @@ const GestureControl = ({ isActive, onToggle, videoContainerElement = null }) =>
           canvasCtx.moveTo(ringX, ringY);
           canvasCtx.lineTo(thumbX, thumbY);
           canvasCtx.stroke();
+          
+          // Draw scroll engagement line (middle + thumb)
+          canvasCtx.strokeStyle = scrollModeEngaged ? '#00FF00' : '#888888';
+          canvasCtx.lineWidth = scrollModeEngaged ? 3 : 1;
+          canvasCtx.beginPath();
+          canvasCtx.moveTo(middleX, middleY);
+          canvasCtx.lineTo(thumbX, thumbY);
+          canvasCtx.stroke();
+          
+          // Draw index finger direction indicator when scroll mode is engaged
+          if (scrollModeEngaged) {
+            const indexBaseX = indexBase.x * videoWidth;
+            const indexBaseY = indexBase.y * videoHeight;
+            canvasCtx.strokeStyle = '#00FF00';
+            canvasCtx.lineWidth = 3;
+            canvasCtx.beginPath();
+            canvasCtx.moveTo(indexBaseX, indexBaseY);
+            canvasCtx.lineTo(indexX, indexY);
+            canvasCtx.stroke();
+            
+            // Draw arrowhead at index tip
+            const angle = Math.atan2(indexY - indexBaseY, indexX - indexBaseX);
+            const arrowLength = 15;
+            const arrowAngle = Math.PI / 6;
+            canvasCtx.beginPath();
+            canvasCtx.moveTo(indexX, indexY);
+            canvasCtx.lineTo(
+              indexX - arrowLength * Math.cos(angle - arrowAngle),
+              indexY - arrowLength * Math.sin(angle - arrowAngle)
+            );
+            canvasCtx.moveTo(indexX, indexY);
+            canvasCtx.lineTo(
+              indexX - arrowLength * Math.cos(angle + arrowAngle),
+              indexY - arrowLength * Math.sin(angle + arrowAngle)
+            );
+            canvasCtx.stroke();
+          }
           
           // Draw threshold circles
           canvasCtx.strokeStyle = '#FFFFFF';
@@ -278,6 +385,91 @@ const GestureControl = ({ isActive, onToggle, videoContainerElement = null }) =>
         } else if (!leftClickEngaged) {
           leftClickStateRef.current = false;
         }
+
+        // Handle scroll gesture
+        if (scrollModeEngaged) {
+          // Calculate index finger direction relative to its base
+          const indexDeltaX = indexTip.x - indexBase.x; // Normalized coordinates
+          const indexDeltaY = indexTip.y - indexBase.y; // Normalized coordinates
+          
+          // Determine scroll direction and speed
+          let scrollAmount = 0;
+          
+          // Check if index is pointing up (negative Y delta means pointing up in normalized coords)
+          if (indexDeltaY < -0.1) { // Index pointing up - scroll down
+            scrollAmount = scrollSpeed;
+          } else if (indexDeltaY > 0.1) { // Index pointing down - scroll up
+            scrollAmount = -scrollSpeed;
+          }
+          
+          // Check if index is pointing right significantly (slow down/stop)
+          if (indexDeltaX > scrollSlowdownThreshold) {
+            // Index pointing right - slow down or stop
+            scrollAmount *= 0.1; // Reduce scroll speed to 10%
+          }
+          
+          // Apply scrolling if there's a scroll amount
+          if (Math.abs(scrollAmount) > 0.1) {
+            // First, check if there's an open modal with a scrollable container
+            const modalScrollContainer = findScrollableModalContainer();
+            
+            if (modalScrollContainer) {
+              // Scroll within the modal
+              modalScrollContainer.scrollBy({
+                top: scrollAmount,
+                behavior: 'auto'
+              });
+            } else {
+              // No modal open, try to find scrollable element at center of screen
+              const centerX = screenWidth / 2;
+              const centerY = screenHeight / 2;
+              const element = document.elementFromPoint(centerX, centerY);
+              
+              if (element) {
+                // Try to find a scrollable parent element
+                const scrollableParent = findScrollableParent(element);
+                
+                if (scrollableParent) {
+                  scrollableParent.scrollBy({
+                    top: scrollAmount,
+                    behavior: 'auto'
+                  });
+                } else {
+                  // Check if the element itself is scrollable
+                  const isScrollable = 
+                    element.scrollHeight > element.clientHeight ||
+                    element.scrollWidth > element.clientWidth;
+                  
+                  if (isScrollable) {
+                    element.scrollBy({
+                      top: scrollAmount,
+                      behavior: 'auto'
+                    });
+                  } else {
+                    // Scroll the window
+                    window.scrollBy({
+                      top: scrollAmount,
+                      behavior: 'auto'
+                    });
+                  }
+                }
+              } else {
+                // Fallback to window scroll
+                window.scrollBy({
+                  top: scrollAmount,
+                  behavior: 'auto'
+                });
+              }
+            }
+          }
+          
+          scrollStateRef.current.isActive = true;
+        } else {
+          // Reset scroll state when gesture is not active
+          if (scrollStateRef.current.isActive) {
+            scrollStateRef.current.isActive = false;
+          }
+        }
       }
     } else {
       // Hand not detected - use timeout to prevent flickering
@@ -288,38 +480,23 @@ const GestureControl = ({ isActive, onToggle, videoContainerElement = null }) =>
           handLostTimeoutRef.current = setTimeout(() => {
             // After 300ms of no hand, disengage
             setIsVisible(false);
-            setDebugInfo(prev => ({
-              ...prev,
-              handDetected: false,
-              cursorControl: false,
-              rightClickEngaged: false,
-              leftClickEngaged: false,
-            }));
             lastHandDetectedRef.current = false;
             handLostTimeoutRef.current = null;
             // Reset smoothed position when hand is truly lost
             smoothedPositionRef.current = { x: null, y: null };
+            // Reset scroll state
+            scrollStateRef.current = {
+              isActive: false,
+              scrollSpeed: 0,
+              lastUpdateTime: null,
+            };
           }, 300); // 300ms grace period to prevent flickering
         }
-        // Update debug info but keep handDetected as true during grace period
-        setDebugInfo(prev => ({
-          ...prev,
-          handDetected: true, // Keep as true during grace period
-        }));
-      } else {
-        // No hand was detected and we didn't have one before
-        setDebugInfo(prev => ({
-          ...prev,
-          handDetected: false,
-          cursorControl: false,
-          rightClickEngaged: false,
-          leftClickEngaged: false,
-        }));
       }
     }
 
     canvasCtx.restore();
-  }, [showDebugWindow]);
+  }, [videoContainerElement]);
 
   useEffect(() => {
     if (!isActive) {
@@ -328,6 +505,11 @@ const GestureControl = ({ isActive, onToggle, videoContainerElement = null }) =>
       prevPositionRef.current = { x: 0, y: 0 };
       setIsVisible(false);
       lastHandDetectedRef.current = false;
+      scrollStateRef.current = {
+        isActive: false,
+        scrollSpeed: 0,
+        lastUpdateTime: null,
+      };
       if (handLostTimeoutRef.current) {
         clearTimeout(handLostTimeoutRef.current);
         handLostTimeoutRef.current = null;
@@ -390,50 +572,60 @@ const GestureControl = ({ isActive, onToggle, videoContainerElement = null }) =>
 
   return (
     <>
-      {/* Debug Toggle Button */}
+      {/* Stop Gesture Control Button - Top Right */}
       {isActive && (
         <button
-          onClick={() => setShowDebugWindow(!showDebugWindow)}
-          className="fixed top-4 right-4 z-[250] bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg font-semibold transition-colors"
-          title="Toggle Debug Window"
+          onClick={onToggle}
+          className="fixed top-4 right-4 z-[250] bg-apple-gray-200 hover:bg-apple-gray-500 text-white px-4 py-2 rounded-lg shadow-lg font-semibold transition-colors flex items-center gap-2"
+          title="Stop Gesture Control"
         >
-          {showDebugWindow ? 'Hide Debug' : 'Show Debug'}
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Stop Gestures
         </button>
       )}
 
       {/* Video and Canvas - Render in custom location via portal if provided */}
       {isActive && videoContainerElement && createPortal(
-        <div className={`w-full h-full relative bg-black rounded-xl overflow-hidden ${showDebugWindow ? '' : 'opacity-0 pointer-events-none'}`}>
+        <div className="w-full h-full relative bg-black rounded-xl overflow-hidden flex items-center justify-center">
           <video
             ref={videoRef}
-            className="transform scale-x-[-1] w-full h-full object-cover"
+            className="transform scale-x-[-1] max-w-full max-h-full w-auto h-auto object-contain"
             autoPlay
             playsInline
             muted
+            style={{
+              aspectRatio: '4/3', // Maintain 640x480 aspect ratio
+            }}
           />
           <canvas
             ref={canvasRef}
             width={640}
             height={480}
-            className="absolute top-0 left-0 w-full h-full transform scale-x-[-1] pointer-events-none"
+            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 scale-x-[-1] pointer-events-none"
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%',
+              width: 'auto',
+              height: 'auto',
+              aspectRatio: '4/3',
+            }}
           />
         </div>,
         videoContainerElement
       )}
       
-      {/* Default fixed position video display */}
+      {/* Hidden video/canvas for MediaPipe processing when not using video container */}
       {isActive && !videoContainerElement && (
-        <div className={showDebugWindow ? "fixed top-20 right-4 z-[250] bg-black rounded-lg shadow-2xl p-2 relative" : "fixed top-0 left-0 w-1 h-1 overflow-hidden pointer-events-none opacity-0"}>
+        <div className="fixed top-0 left-0 w-1 h-1 overflow-hidden pointer-events-none opacity-0">
           <video
             ref={videoRef}
-            className={showDebugWindow ? "transform scale-x-[-1] rounded block" : "transform scale-x-[-1]"}
+            className="transform scale-x-[-1]"
             autoPlay
             playsInline
             muted
-            style={showDebugWindow ? { 
-              width: '320px',
-              height: '240px',
-            } : { 
+            style={{ 
               width: '1px',
               height: '1px',
               position: 'absolute',
@@ -445,18 +637,13 @@ const GestureControl = ({ isActive, onToggle, videoContainerElement = null }) =>
             ref={canvasRef}
             width={640}
             height={480}
-            className={showDebugWindow ? "absolute top-2 left-2 transform scale-x-[-1]" : ""}
-            style={showDebugWindow ? {
-              width: '320px',
-              height: '240px',
-              pointerEvents: 'none',
-            } : { display: 'none' }}
+            style={{ display: 'none' }}
           />
         </div>
       )}
 
-      {/* Debug Info Panel */}
-      {/* {isActive && showDebugWindow && (
+      {/* Debug Info Panel - Removed */}
+      {/* {isActive && (
         <div className="fixed top-20 right-[360px] z-[250] bg-gray-900 text-white p-4 rounded-lg shadow-2xl font-mono text-sm min-w-[250px]">
           <h3 className="text-lg font-bold mb-3 text-blue-400">Debug Info</h3>
           <div className="space-y-2">
