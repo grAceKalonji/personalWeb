@@ -196,7 +196,7 @@ function App() {
                         You can also control the cursor on this page with your hand gestures <br/>   
                       </div> 
                       <div className="mb-4 text-center text-apple-gray-700 font transition-all duration-300 hover:text-apple-gray-900">
-                        Constantly hold index+thumb to move the cursor <br/> add your middle to and return it to click and your ring to right click <br/>  
+                        Constantly hold index+thumb to move the cursor <br/> add your middle to and return it to left click and your ring finger to right click <br/>  
                       </div> 
                       <button
                         onClick={() => setIsGestureActive(!isGestureActive)}
