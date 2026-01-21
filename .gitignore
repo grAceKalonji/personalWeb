@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+research_paper/adhd_classification_paper.pdf
 
 gControl
 

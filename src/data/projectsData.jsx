@@ -7,22 +7,24 @@ export const mainProjects = [
     description: 'Built a lightweight, two-staged model that uses EEG signals to help diagnose ADHD',
     size: 'large',
     details: 'Problem: Over the past two decades, rates of ADHD diagnosis have risen significantly. Despite this rise, ADHD screening methods remain almost entirely clinical, this increases diagnostic burden and creates a need for more objective, data driven tools. While research has been done on utilizing physiological data to diagnose patients, there still remains much room for improvement. Approach: Using a dataset of preprocessed EEG-derived feature vectors from Kaggle, I implemented a lightweight, teacher–student deep learning pipeline for 3 different models: A small 1D ResNet model, A transformer model, and A eegnet model. All these were trained as a "teacher" to identify discriminative EEG features using gradient-based saliency. These saliency maps were then used to filter low-importance features, and the resulting masked data was evaluated using EEGNet, a compact architecture designed for EEG classification. They all shared the same student architecture (EEGNet). Performance was compared against the masked data and the unfiltered data.',
+    
     demos: [
       { description: 'Advanced signal processing and feature extraction from EEG data' },
      
     ],
   },
-  {/* Revise 
-  {
-    id: 2,
-    title: 'Revise',
-    description: 'Mobile app Meant to help anyone learn through constant repetition',
-    size: 'medium',
-    demos: [
-      { title: 'Task Board', description: 'Kanban-style task organization' },
 
+   {
+    id: 2,
+    title: 'Privacy Lens',
+    description: "Gives clarity on data collection and whether a sites actions match what it claims",
+    size: 'medium',
+      details: 'A Chrome extension that helps you understand where your data actually goes when you visit a website. Instead of assuming all data collection is bad, PrivacyLens gives you clarity on what data is being collected, why its being collected, and whether a sites actions match what it claims.',
+    demos: [
+      { description: 'Determines how safe sites are.' },
     ],
   },
+
   {
     id: 3,
     title: 'Analytics',
@@ -53,20 +55,13 @@ export const mainProjects = [
 
     ],
   },
-  */}
+
+  
 ];
 
 export const additionalProjects = [
 
-  {
-    id: 6,
-    title: 'Privacy Lens',
-    description: 'Determines how safe sites are.',
-    size: 'square',
-    demos: [
-      { icon: '🌤️', title: 'Weather Forecast', description: '7-day weather predictions' },
-    ],
-  },
+ 
   {
     id: 7,
     title: 'Recipe Finder',

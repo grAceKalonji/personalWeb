@@ -1,0 +1,400 @@
+\documentclass[10pt,a4paper,twocolumn]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage[margin=1in]{geometry}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{cite}
+\usepackage{multicol}
+
+% Title formatting
+\titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{1em}{}
+
+% Line spacing - use single spacing for two-column
+\singlespacing
+
+% Column separation
+\setlength{\columnsep}{0.25in}
+
+% Title and author
+\title{\textbf{A Lightweight Teacher-Student Deep Learning Pipeline for ADHD Classification Using EEG-Derived Features}}
+
+\author{
+    Marcel Kalonji\\
+    \textit{Independent Research}\\
+    \href{mailto:grace.kalonji@example.com}{grace.kalonji@example.com}
+}
+
+\date{\today}
+
+\begin{document}
+
+\twocolumn[
+\maketitle
+
+%--------------------------------------------------------------
+% ABSTRACT
+%--------------------------------------------------------------
+\begin{abstract}
+Attention Deficit Hyperactivity Disorder (ADHD) is one of the most prevalent neurodevelopmental disorders, yet its diagnosis remains predominantly clinical and subjective. This study presents a lightweight, two-staged teacher-student deep learning pipeline for automated ADHD classification using electroencephalogram (EEG) derived feature vectors. We implement and evaluate three distinct teacher architectures—a 1D ResNet, a Time Series Transformer, and an EEGNet—each trained to identify discriminative EEG features through gradient-based saliency mapping. These saliency maps are subsequently used to filter low-importance features, and the resulting masked data is evaluated using EEGNet as the student architecture. Our experiments on a publicly available preprocessed EEG dataset demonstrate that the Transformer-Teacher with EEGNet-Student pipeline achieves the best performance with an accuracy of 80.46\%, F1 score of 80.57\%, and inference time of 0.33 seconds. These results suggest that feature masking guided by deep learning saliency can improve classification efficiency while maintaining competitive accuracy, offering a promising direction for objective, data-driven ADHD screening tools.
+\end{abstract}
+
+\textbf{Keywords:} ADHD, EEG, Deep Learning, Teacher-Student Learning, Feature Selection, Saliency Maps, EEGNet, Transformer
+\vspace{0.5cm}
+]
+
+%--------------------------------------------------------------
+% INTRODUCTION
+%--------------------------------------------------------------
+\section{Introduction}
+
+Over the past two decades, the rates of Attention Deficit Hyperactivity Disorder (ADHD) diagnosis have risen significantly across all age groups \cite{adhd_prevalence}. ADHD is a neurodevelopmental disorder characterized by persistent patterns of inattention, hyperactivity, and impulsivity that interfere with daily functioning and development. Despite this rise in prevalence, ADHD screening methods remain almost entirely clinical, relying heavily on behavioral assessments, questionnaires, and clinical interviews \cite{clinical_assessment}.
+
+This predominantly subjective approach to diagnosis presents several challenges:
+
+\begin{itemize}
+    \item \textbf{Diagnostic burden:} Clinical assessments are time-consuming and require specialized expertise
+    \item \textbf{Subjectivity:} Different clinicians may reach different conclusions based on the same symptoms
+    \item \textbf{Delayed diagnosis:} The lack of objective biomarkers can lead to delayed or missed diagnoses
+    \item \textbf{Comorbidity confusion:} ADHD symptoms often overlap with other conditions, complicating diagnosis
+\end{itemize}
+
+These limitations have created a pressing need for more objective, data-driven diagnostic tools. Electroencephalography (EEG) has emerged as a promising modality for ADHD detection due to its non-invasive nature, temporal resolution, and ability to capture neural activity patterns associated with attention and executive function \cite{eeg_adhd}.
+
+While research has been conducted on utilizing physiological data, particularly EEG signals, to diagnose ADHD, there remains significant room for improvement in terms of both accuracy and computational efficiency. Many existing approaches either require extensive computational resources or fail to achieve clinically relevant accuracy levels.
+
+\subsection{Contributions}
+
+This paper makes the following contributions:
+
+\begin{enumerate}
+    \item We propose a lightweight, two-staged teacher-student deep learning pipeline for ADHD classification using EEG-derived features
+    \item We implement and compare three teacher architectures: 1D ResNet, Time Series Transformer, and EEGNet
+    \item We demonstrate that gradient-based saliency mapping can effectively identify discriminative features for feature selection
+    \item We show that the proposed approach achieves competitive accuracy (80.46\%) with efficient inference times suitable for real-time applications
+\end{enumerate}
+
+%--------------------------------------------------------------
+% RELATED WORK
+%--------------------------------------------------------------
+\section{Related Work}
+
+\subsection{EEG-Based ADHD Detection}
+
+EEG has been extensively studied for ADHD detection due to its ability to capture the neurophysiological abnormalities associated with the disorder. Traditional approaches have focused on extracting hand-crafted features such as power spectral density, connectivity measures, and event-related potentials \cite{eeg_features}.
+
+Recent work has shifted toward deep learning approaches that can automatically learn relevant features from raw or minimally preprocessed EEG data. Convolutional Neural Networks (CNNs) have shown promise in capturing spatial and temporal patterns in EEG signals \cite{cnn_eeg}, while recurrent architectures such as LSTMs have been used to model the sequential nature of EEG data \cite{lstm_eeg}.
+
+\subsection{EEGNet Architecture}
+
+EEGNet \cite{eegnet} is a compact convolutional neural network architecture specifically designed for EEG-based brain-computer interfaces. It employs depthwise and separable convolutions to efficiently learn spatial and temporal features from EEG data while maintaining a small parameter count. This makes it particularly suitable for deployment in resource-constrained environments.
+
+\subsection{Teacher-Student Learning}
+
+Teacher-student learning, also known as knowledge distillation \cite{knowledge_distillation}, is a training paradigm where a smaller "student" network is trained to mimic the behavior of a larger "teacher" network. This approach has been successfully applied to compress large models while maintaining performance. In this work, we extend this paradigm by using teacher networks to identify important features through saliency mapping, rather than for traditional knowledge distillation.
+
+\subsection{Gradient-Based Saliency}
+
+Gradient-based saliency methods compute the importance of input features by examining the gradients of the model's output with respect to its inputs \cite{saliency}. These methods have been widely used for model interpretability and can reveal which input features most strongly influence the model's predictions.
+
+%--------------------------------------------------------------
+% METHODOLOGY
+%--------------------------------------------------------------
+\section{Methodology}
+
+\subsection{Dataset}
+
+We utilized a publicly available dataset of preprocessed EEG-derived feature vectors from Kaggle \cite{kaggle_dataset}. The dataset contains feature vectors extracted from EEG recordings of subjects diagnosed with ADHD and healthy controls. The preprocessing pipeline applied to the original EEG data included:
+
+\begin{itemize}
+    \item Band-pass filtering to remove artifacts
+    \item Segmentation into fixed-length epochs
+    \item Feature extraction including spectral and temporal features
+    \item Normalization and standardization
+\end{itemize}
+
+\subsection{Proposed Pipeline}
+
+Our approach consists of a two-staged pipeline:
+
+\subsubsection{Stage 1: Teacher Training and Saliency Extraction}
+
+In the first stage, we train three different "teacher" models on the full feature set:
+
+\begin{enumerate}
+    \item \textbf{1D ResNet:} A one-dimensional residual network adapted for time-series classification. The architecture includes residual blocks with skip connections to facilitate gradient flow and enable training of deeper networks.
+    
+    \item \textbf{Time Series Transformer:} A transformer-based architecture designed for sequential data. It employs self-attention mechanisms to capture long-range dependencies in the EEG feature sequences.
+    
+    \item \textbf{EEGNet:} A compact CNN architecture specifically designed for EEG classification. It uses depthwise separable convolutions to efficiently learn spatial and temporal features.
+\end{enumerate}
+
+After training, we compute gradient-based saliency maps for each teacher model. The saliency score $S_i$ for each feature $x_i$ is computed as:
+
+\begin{equation}
+    S_i = \left| \frac{\partial L}{\partial x_i} \right|
+\end{equation}
+
+where $L$ is the loss function. These saliency scores indicate the importance of each feature for the classification task.
+
+\subsubsection{Stage 2: Feature Masking and Student Evaluation}
+
+In the second stage, we use the saliency maps to create a feature mask. Features with saliency scores below a threshold $\tau$ are masked (set to zero), effectively filtering out low-importance features:
+
+\begin{equation}
+    x_i^{masked} = \begin{cases} x_i & \text{if } S_i \geq \tau \\ 0 & \text{otherwise} \end{cases}
+\end{equation}
+
+The masked feature vectors are then used to train and evaluate an EEGNet "student" model. This approach allows us to:
+
+\begin{itemize}
+    \item Reduce the effective dimensionality of the input
+    \item Focus the student model on the most discriminative features
+    \item Potentially improve generalization by removing noisy or irrelevant features
+\end{itemize}
+
+\begin{algorithm}[h]
+\caption{Teacher-Student Pipeline}
+\small
+\begin{algorithmic}[1]
+\State \textbf{Input:} Features $X$, labels $Y$
+\State \textbf{Output:} Trained student model
+\State \textit{// Stage 1: Teacher Training}
+\For{$T \in \{ResNet1D, Transformer, EEGNet\}$}
+    \State Train teacher $T$ on $(X, Y)$
+    \State Compute saliency maps $S_T$
+\EndFor
+\State \textit{// Stage 2: Feature Masking}
+\State Compute mask $M$ from saliency
+\State $X_{masked} = X \odot M$
+\State Train student on $(X_{masked}, Y)$
+\State \Return Student model
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Model Architectures}
+
+\subsubsection{1D ResNet}
+
+Our 1D ResNet architecture consists of:
+\begin{itemize}
+    \item Initial convolutional layer with batch normalization
+    \item Multiple residual blocks with skip connections
+    \item Global average pooling
+    \item Fully connected classification head
+\end{itemize}
+
+\subsubsection{Time Series Transformer}
+
+The transformer architecture includes:
+\begin{itemize}
+    \item Positional encoding layer
+    \item Multi-head self-attention layers
+    \item Feed-forward networks with GELU activation
+    \item Classification token for final prediction
+\end{itemize}
+
+\subsubsection{EEGNet (Student)}
+
+The EEGNet student architecture follows the original design \cite{eegnet}:
+\begin{itemize}
+    \item Temporal convolution layer
+    \item Depthwise spatial convolution
+    \item Separable convolution
+    \item Classification layer
+\end{itemize}
+
+\subsection{Training Details}
+
+All models were trained using the following configuration:
+\begin{itemize}
+    \item Optimizer: Adam with learning rate $10^{-3}$
+    \item Loss function: Cross-entropy loss
+    \item Batch size: 32
+    \item Early stopping with patience of 10 epochs
+    \item 80-20 train-test split with stratification
+\end{itemize}
+
+%--------------------------------------------------------------
+% RESULTS
+%--------------------------------------------------------------
+\section{Results}
+
+\subsection{Performance Comparison}
+
+Table \ref{tab:results} presents the comprehensive performance comparison of our models across different configurations.
+
+\begin{table*}[t]
+\centering
+\caption{Performance metrics for different teacher-student configurations}
+\label{tab:results}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Model} & \textbf{Dataset} & \textbf{Accuracy} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} \\
+\midrule
+EEGNet (Teacher) & Masked & 0.6115 & 0.4641 & 0.3739 & 0.6115 \\
+ResNet1D (Teacher) & Masked & 0.7904 & 0.7871 & 0.7884 & 0.7904 \\
+\textbf{Transformer (Teacher)} & \textbf{Masked} & \textbf{0.8046} & \textbf{0.8057} & \textbf{0.8079} & \textbf{0.8046} \\
+\midrule
+EEGNet (Baseline) & Raw & 0.7814 & 0.7695 & 0.7904 & 0.7814 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table}[h]
+\centering
+\caption{Inference time comparison (s/sample)}
+\label{tab:inference}
+\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Model} & \textbf{Data} & \textbf{Time (s)} \\
+\midrule
+EEGNet & Masked & 0.3206 \\
+ResNet1D & Masked & 0.3258 \\
+Transformer & Masked & 0.3301 \\
+EEGNet & Raw & 0.3694 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Key Findings}
+
+\subsubsection{Best Performing Configuration}
+
+The Time Series Transformer teacher with EEGNet student pipeline achieved the best overall performance:
+\begin{itemize}
+    \item \textbf{Accuracy:} 80.46\%
+    \item \textbf{F1 Score:} 80.57\%
+    \item \textbf{Precision:} 80.79\%
+    \item \textbf{Recall:} 80.46\%
+    \item \textbf{Inference Time:} 0.33 seconds
+\end{itemize}
+
+\subsubsection{Effect of Feature Masking}
+
+Comparing the EEGNet baseline (trained on raw preprocessed data) with the masked configurations reveals interesting patterns:
+
+\begin{itemize}
+    \item The EEGNet-Teacher with masked data performed worse (61.15\%) than the baseline (78.14\%), suggesting that EEGNet's saliency maps may not effectively capture discriminative features
+    \item The ResNet1D and Transformer teachers both improved upon the baseline when used to guide feature masking
+    \item The Transformer's attention mechanism appears to identify the most relevant features, leading to the best performance on masked data
+\end{itemize}
+
+\subsubsection{Inference Efficiency}
+
+All masked configurations achieved faster inference times compared to the raw data baseline:
+\begin{itemize}
+    \item Average improvement: 10-13\% reduction in inference time
+    \item The efficiency gain comes from processing a reduced effective feature space
+    \item Inference times remain suitable for real-time applications
+\end{itemize}
+
+%--------------------------------------------------------------
+% DISCUSSION
+%--------------------------------------------------------------
+\section{Discussion}
+
+\subsection{Interpretation of Results}
+
+Our results demonstrate that the choice of teacher architecture significantly impacts the quality of the learned saliency maps and, consequently, the effectiveness of feature masking. The Time Series Transformer's self-attention mechanism appears particularly well-suited for identifying the most discriminative EEG features for ADHD classification.
+
+The poor performance of EEGNet as a teacher for feature masking (61.15\% accuracy) suggests that not all architectures produce equally useful saliency maps. This finding has important implications for the design of teacher-student pipelines: the teacher's architecture should be chosen not only for its classification performance but also for its ability to produce interpretable and useful feature attributions.
+
+\subsection{Clinical Implications}
+
+The achieved accuracy of 80.46\% represents a promising step toward objective ADHD screening tools. While not yet sufficient for standalone diagnosis, such a system could serve as:
+
+\begin{itemize}
+    \item A preliminary screening tool to identify individuals who should undergo comprehensive clinical evaluation
+    \item A supplementary data point to support clinical decision-making
+    \item A tool for monitoring treatment response over time
+\end{itemize}
+
+\subsection{Limitations}
+
+This study has several limitations that should be addressed in future work:
+
+\begin{enumerate}
+    \item \textbf{Dataset size:} The relatively small dataset may limit generalizability
+    \item \textbf{Preprocessed features:} Using preprocessed feature vectors rather than raw EEG may miss important information
+    \item \textbf{Single dataset:} Validation on multiple independent datasets is needed
+    \item \textbf{Binary classification:} ADHD presentations are heterogeneous and may benefit from multi-class or severity-based classification
+\end{enumerate}
+
+\subsection{Future Directions}
+
+Several promising directions for future research include:
+
+\begin{itemize}
+    \item Exploring other saliency methods such as integrated gradients or SHAP values
+    \item Investigating the neurophysiological interpretation of the selected features
+    \item Extending the approach to raw EEG data using end-to-end learning
+    \item Developing ensemble methods combining multiple teacher architectures
+    \item Validating on larger, multi-site datasets with diverse populations
+\end{itemize}
+
+%--------------------------------------------------------------
+% CONCLUSION
+%--------------------------------------------------------------
+\section{Conclusion}
+
+This paper presented a lightweight, two-staged teacher-student deep learning pipeline for ADHD classification using EEG-derived features. By training teacher models to identify discriminative features through gradient-based saliency and using these insights to guide feature masking, we achieved competitive classification performance with improved computational efficiency.
+
+Our experiments demonstrated that the Time Series Transformer serves as the most effective teacher architecture, achieving 80.46\% accuracy with an inference time of 0.33 seconds. These results suggest that attention-based models may be particularly well-suited for identifying clinically relevant patterns in EEG data.
+
+The proposed approach represents a step toward more objective, data-driven tools for ADHD screening. While further validation is needed before clinical deployment, the combination of reasonable accuracy and efficient inference makes this approach suitable for real-world screening applications. Future work will focus on validating these findings on larger datasets and exploring the neurophysiological interpretation of the selected features.
+
+%--------------------------------------------------------------
+% REFERENCES
+%--------------------------------------------------------------
+\begin{thebibliography}{99}
+
+\bibitem{adhd_prevalence}
+Danielson, M. L., et al. (2018). Prevalence of parent-reported ADHD diagnosis and associated treatment among US children and adolescents, 2016. \textit{Journal of Clinical Child \& Adolescent Psychology}, 47(2), 199-212.
+
+\bibitem{clinical_assessment}
+American Psychiatric Association. (2013). \textit{Diagnostic and statistical manual of mental disorders} (5th ed.). Arlington, VA: American Psychiatric Publishing.
+
+\bibitem{eeg_adhd}
+Snyder, S. M., et al. (2015). Integration of an EEG biomarker with a clinician's ADHD evaluation. \textit{Brain and Behavior}, 5(4), e00330.
+
+\bibitem{eeg_features}
+Lenartowicz, A., \& Loo, S. K. (2014). Use of EEG to diagnose ADHD. \textit{Current Psychiatry Reports}, 16(11), 498.
+
+\bibitem{cnn_eeg}
+Schirrmeister, R. T., et al. (2017). Deep learning with convolutional neural networks for EEG decoding and visualization. \textit{Human Brain Mapping}, 38(11), 5391-5420.
+
+\bibitem{lstm_eeg}
+Bashivan, P., et al. (2015). Learning representations from EEG with deep recurrent-convolutional neural networks. \textit{arXiv preprint arXiv:1511.06448}.
+
+\bibitem{eegnet}
+Lawhern, V. J., et al. (2018). EEGNet: a compact convolutional neural network for EEG-based brain–computer interfaces. \textit{Journal of Neural Engineering}, 15(5), 056013.
+
+\bibitem{knowledge_distillation}
+Hinton, G., Vinyals, O., \& Dean, J. (2015). Distilling the knowledge in a neural network. \textit{arXiv preprint arXiv:1503.02531}.
+
+\bibitem{saliency}
+Simonyan, K., Vedaldi, A., \& Zisserman, A. (2013). Deep inside convolutional networks: Visualising image classification models and saliency maps. \textit{arXiv preprint arXiv:1312.6034}.
+
+\bibitem{kaggle_dataset}
+EEG Dataset for ADHD. Kaggle. Available at: \url{https://www.kaggle.com/datasets/danizo/eeg-dataset-for-adhd}
+
+\end{thebibliography}
+
+\end{document}
+

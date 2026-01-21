@@ -45,7 +45,9 @@ const ContactPage = () => {
         <div className="space-y-8">
           {/* Email */}
           <a
-            href="graceklnj@gmail.com"
+            href="https://mail.google.com/mail/?view=cm&to=graceklnj@gmail.com&su=Contact%20from%20Portfolio%20Website"
+            target="_blank"
+            rel="noopener noreferrer"
             className="
               block
               p-6
