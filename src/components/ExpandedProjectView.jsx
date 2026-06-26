@@ -1,9 +1,14 @@
 import FolderIcon from './FolderIcon';
 import ADHDProjectContent from './ADHDProjectContent';
+import AegisProjectContent from './AegisProjectContent';
 import adhdReport from '../assets/documents/Adhd_report.pdf';
+import aegisPitch from '../assets/documents/Aegis_pitch.pdf';
+import BenchmarkingReport from '../assets/documents/Aegis_BenchmarkReport.pdf';
 
 const ExpandedProjectView = ({ project, onClose }) => {
   const isADHDProject = project.id === 1;
+  const isAegisProject = project.id === 2;
+  const hasCustomContent = isADHDProject || isAegisProject;
 
   return (
     <div
@@ -80,7 +85,7 @@ const ExpandedProjectView = ({ project, onClose }) => {
               <p className="text-lg text-apple-gray-600">
                 {project.description}
               </p>
-              {/* Links - ADHD specific */}
+              {/* Project links */}
               {isADHDProject && (
                 <div className="flex gap-4 mt-4">
                   <a
@@ -101,6 +106,47 @@ const ExpandedProjectView = ({ project, onClose }) => {
                   </a>
                 </div>
               )}
+              {isAegisProject && (
+                <div className="flex gap-4 mt-4">
+                  <a
+                    href={'https://aegis-ai.vercel.ap/'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-apple-gray-900 font-semibold underline hover:text-apple-gray-700 transition-colors"
+                  >
+                    [Website]
+                  </a>
+
+                  <a
+                    href={BenchmarkingReport}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-apple-gray-900 font-semibold underline hover:text-apple-gray-700 transition-colors"
+                  >
+                    [BenchmarkingReport]
+                  </a>
+
+                  <a
+                    href={aegisPitch}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-apple-gray-900 font-semibold underline hover:text-apple-gray-700 transition-colors"
+                  >
+                    [Project Pitch]
+                  </a>
+
+                  <a
+                    href="https://github.com/grAceKalonji/Aegis"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-apple-gray-900 font-semibold underline hover:text-apple-gray-700 transition-colors"
+                  >
+                    [GitHub Repo]
+                  </a>
+                 
+                  
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -113,14 +159,35 @@ const ExpandedProjectView = ({ project, onClose }) => {
               <h3 className="text-2xl font-semibold text-apple-gray-900 mb-4">
                 Project Overview
               </h3>
-              <div className="bg-apple-gray-50 rounded-2xl p-6 border border-apple-gray-200">
-                <div className="text-apple-gray-700 leading-relaxed">
-                  {typeof project.details === 'string' 
-                    ? <p>{project.details}</p>
-                    : project.details || <p>Project details coming soon...</p>
-                  }
+              {project.details?.problem && project.details?.approach ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-apple-gray-50 rounded-2xl p-6 border border-apple-gray-200">
+                    <h4 className="text-sm font-semibold text-apple-gray-500 uppercase tracking-wide mb-3">
+                      Problem
+                    </h4>
+                    <p className="text-apple-gray-700 leading-relaxed text-sm sm:text-base">
+                      {project.details.problem}
+                    </p>
+                  </div>
+                  <div className="bg-apple-gray-50 rounded-2xl p-6 border border-apple-gray-200">
+                    <h4 className="text-sm font-semibold text-apple-gray-500 uppercase tracking-wide mb-3">
+                      Approach
+                    </h4>
+                    <p className="text-apple-gray-700 leading-relaxed text-sm sm:text-base">
+                      {project.details.approach}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-apple-gray-50 rounded-2xl p-6 border border-apple-gray-200">
+                  <div className="text-apple-gray-700 leading-relaxed">
+                    {typeof project.details === 'string'
+                      ? <p>{project.details}</p>
+                      : project.details || <p>Project details coming soon...</p>
+                    }
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Project-Specific Content */}
@@ -132,9 +199,10 @@ const ExpandedProjectView = ({ project, onClose }) => {
                 <ADHDProjectContent />
               </div>
             )}
+            {isAegisProject && <AegisProjectContent />}
 
             {/* Features/Demos Section - Generic for all projects */}
-            {project.demos && project.demos.length > 0 && !isADHDProject && (
+            {project.demos && project.demos.length > 0 && !hasCustomContent && (
               <div>
                 <h3 className="text-2xl font-semibold text-apple-gray-900 mb-4">
                   Features

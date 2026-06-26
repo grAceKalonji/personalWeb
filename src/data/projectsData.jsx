@@ -14,15 +14,16 @@ export const mainProjects = [
     ],
   },
 
-   {
+  {
     id: 2,
-    title: 'Privacy Lens',
-    description: "Gives clarity on data collection and whether a sites actions match what it claims",
+    title: 'Aegis',
+    description: 'AI-assisted vaccine and therapeutic discovery with iterative simulation and real-time reasoning graphs',
     size: 'medium',
-      details: 'A Chrome extension that helps you understand where your data actually goes when you visit a website. Instead of assuming all data collection is bad, PrivacyLens gives you clarity on what data is being collected, why its being collected, and whether a sites actions match what it claims.',
-    demos: [
-      { description: 'Determines how safe sites are.' },
-    ],
+    details: {
+      problem: 'Vaccine discovery is slow, subjective, and linear. Researchers spend months reading papers, score candidates inconsistently, and restart after every failed experiment with no system that evolves its proposals, cites the literature behind each decision, or shows its reasoning in one place.',
+      approach: 'Aegis takes in disease biology papers, builds a searchable RAG knowledge base, and runs an iterative simulation that proposes, scores, and evolves candidates. Each round retrieves evidence, generates new options, scores them across 7 weighted dimensions with traceable citations, streams results to a live reasoning graph and displays the candidates 3 dimentional molecular structure.',
+    },
+    demos: [],
   },
 
   {
@@ -72,6 +73,32 @@ export const additionalProjects = [
     ],
   },
   
+];
+
+// Aegis-specific data
+export const aegisTechStack = [
+  'React', 'TypeScript', 'Vite', 'Tailwind CSS', 'Framer Motion',
+  'FastAPI', 'Python', 'PostgreSQL', 'Supabase', 'pgvector',
+  'OpenAI Embeddings', 'Claude 3.5 Sonnet', 'WebSocket', '3Dmol.js',
+];
+
+export const aegisFeatures = [
+  { title: 'RAG Knowledge Base', description: 'PDFs are chunked (800 tokens, 200 overlap), embedded with text-embedding-3-small, and retrieved via cosine similarity — scaling to hundreds of papers at constant cost.' },
+  { title: 'PubMed Discovery', description: 'Claude generates optimized virology, pathogenesis, and epidemiology queries against NCBI E-utilities, ranks results by relevance, and imports open-access PDFs in one click.' },
+  { title: 'Iterative Simulation', description: 'Candidates evolve across iterations with parent-child lineage. The loop runs until max iterations or convergence (< 1% score variance over 3 rounds).' },
+  { title: 'Real-Time Graph', description: 'Every scored candidate renders as a node — x-axis is iteration, y-axis is rank, edges show evolution. Click any node for full mechanism and score breakdown.' },
+  { title: 'Structural Validation', description: 'In vaccine mode, candidates are mapped to PDB entries and benchmarked against approved vaccines (BNT162b2, mRNA-1273) with 3Dmol rendering.' },
+  { title: 'Row-Level Security', description: 'Supabase RLS isolates every user\'s papers, simulations, and candidates at the database level. API keys stay server-side only.' },
+];
+
+export const aegisScoringDimensions = [
+  { name: 'Immunogenicity', weight: '20%' },
+  { name: 'Safety', weight: '20%' },
+  { name: 'Efficacy', weight: '15%' },
+  { name: 'Breadth of Protection', weight: '15%' },
+  { name: 'Manufacturability', weight: '10%' },
+  { name: 'Stability', weight: '10%' },
+  { name: 'Novelty', weight: '10%' },
 ];
 
 // ADHD-specific results data

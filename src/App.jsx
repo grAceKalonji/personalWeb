@@ -38,11 +38,9 @@ function App() {
     { name: 'Data Processing', icon: '' },
   ];
 
-  const internships = [
-    { name: 'Incoming', icon: '' },
-    { name: 'Incoming', icon: '' },
-    { name: 'Incoming', icon: '' },
-  ];
+  const experience = [
+    { name: 'DSA Teaching Assistant at USM', icon: '' },
+  ]
 
 
   return (
@@ -77,24 +75,27 @@ function App() {
                 ${showTechStack ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}
               `}
             >
-              <h2 className="text-sm font-medium text-apple-gray-500 mb-4 uppercase tracking-wide mb-3">
-                Interend with: 
-              </h2>
-              <div className="flex flex-wrap gap-4 sm:gap-6 mb-8">  
-                {internships.map((internship, index) => (
-                  <div
-                    key={internship.name}
-                    className={`flex items-center gap-2 px-4 py-2 bg-apple-gray-50 rounded-xl border border-apple-gray-200 transition-all duration-500 hover:bg-white hover:shadow-lg hover:border-apple-gray-300 hover:-translate-y-1`}
-                    style={{
-                      transitionDelay: showTechStack ? `${index * 50}ms` : '0ms',
-                    }}
-                  >
-
-                    <span className="text-2xl">{internship.icon}</span>
-                    <span className="text-sm font-medium text-apple-gray-700">{internship.name}</span>
+              {experience.length > 0 && (
+                <>
+                  <h2 className="text-sm font-medium text-apple-gray-500 mb-4 uppercase tracking-wide mb-3">
+                    Experience:
+                  </h2>
+                  <div className="flex flex-wrap gap-4 sm:gap-6 mb-8">
+                    {experience.map((role, index) => (
+                      <div
+                        key={role.name}
+                        className="flex items-center gap-2 px-4 py-2 bg-apple-gray-50 rounded-xl border border-apple-gray-200 transition-all duration-500 hover:bg-white hover:shadow-lg hover:border-apple-gray-300 hover:-translate-y-1"
+                        style={{
+                          transitionDelay: showTechStack ? `${index * 50}ms` : '0ms',
+                        }}
+                      >
+                        {role.icon && <span className="text-2xl">{role.icon}</span>}
+                        <span className="text-sm font-medium text-apple-gray-700">{role.name}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </>
+              )}
 
 
               <h2 className="text-sm font-medium text-apple-gray-500 mb-4 uppercase tracking-wide">
