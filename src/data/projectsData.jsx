@@ -37,8 +37,8 @@ export const mainProjects = [
   },
   {
     id: 4,
-    title: 'Tracker',
-    description: 'Personal fitness tracking with workout plans',
+    title: 'Coming soon',
+    description: 'Explore cloud classification',
     size: 'medium',
     demos: [
       {description: '' },
@@ -47,8 +47,8 @@ export const mainProjects = [
   },
   {
     id: 5,
-    title: 'Cloud classification',
-    description: 'Classify clouds',
+    title: 'Coming soon',
+    description: 'Maybe froomula 1 related',
     size: 'medium',
     demos: [
       {description: '' },
@@ -64,8 +64,8 @@ export const additionalProjects = [
  
   {
     id: 7,
-    title: 'Recipe Finder',
-    description: 'Discover recipes based on ingredients',
+    title: 'Coming soon',
+    description: '',
     size: 'square',
     demos: [
       { icon: '🍳', title: 'Recipe Search', description: 'Find recipes by ingredients' },
