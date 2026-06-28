@@ -39,7 +39,7 @@ function App() {
   ];
 
   const experience = [
-    { name: 'DSA Teaching Assistant at USM', icon: '' },
+    { name: 'COS Teaching Assistant at USM', icon: '' },
   ]
 
 

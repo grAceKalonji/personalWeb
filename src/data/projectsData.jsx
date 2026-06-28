@@ -6,12 +6,11 @@ export const mainProjects = [
     title: 'ADHD Classification',
     description: 'Built a lightweight, two-staged model that uses EEG signals to help diagnose ADHD',
     size: 'large',
-    details: 'Problem: Over the past two decades, rates of ADHD diagnosis have risen significantly. Despite this rise, ADHD screening methods remain almost entirely clinical, this increases diagnostic burden and creates a need for more objective, data driven tools. While research has been done on utilizing physiological data to diagnose patients, there still remains much room for improvement. Approach: Using a dataset of preprocessed EEG-derived feature vectors from Kaggle, I implemented a lightweight, teacher–student deep learning pipeline for 3 different models: A small 1D ResNet model, A transformer model, and A eegnet model. All these were trained as a "teacher" to identify discriminative EEG features using gradient-based saliency. These saliency maps were then used to filter low-importance features, and the resulting masked data was evaluated using EEGNet, a compact architecture designed for EEG classification. They all shared the same student architecture (EEGNet). Performance was compared against the masked data and the unfiltered data.',
-    
-    demos: [
-      { description: 'Advanced signal processing and feature extraction from EEG data' },
-     
-    ],
+    details: {
+      problem: 'Over the past two decades, rates of ADHD diagnosis have risen significantly. Despite this rise, ADHD screening methods remain almost entirely clinical, this increases diagnostic burden and creates a need for more objective, data driven tools. While research has been done on utilizing physiological data to diagnose patients, there still remains much room for improvement.',
+      approach: 'Using a dataset of preprocessed EEG-derived feature vectors from Kaggle, I implemented a lightweight, teacher–student deep learning pipeline for 3 different models: A small 1D ResNet model, A transformer model, and A eegnet model. All these were trained as a "teacher" to identify discriminative EEG features using gradient-based saliency. These saliency maps were then used to filter low-importance features, and the resulting masked data was evaluated using EEGNet, a compact architecture designed for EEG classification. They all shared the same student architecture (EEGNet). Performance was compared against the masked data and the unfiltered data.',
+    },
+      demos: [],
   },
 
   {
@@ -28,8 +27,8 @@ export const mainProjects = [
 
   {
     id: 3,
-    title: 'Analytics',
-    description: 'Comprehensive social media insights and reporting',
+    title: 'Coming soon',
+    description: 'AI assisted journal, casual interactions get turnt into prioritized entried linked to your calender',
     size: 'wide',
     demos: [
       {description: '' },

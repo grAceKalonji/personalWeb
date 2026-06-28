@@ -109,7 +109,7 @@ const ExpandedProjectView = ({ project, onClose }) => {
               {isAegisProject && (
                 <div className="flex gap-4 mt-4">
                   <a
-                    href={'https://aegis-ai.vercel.ap/'}
+                    href={'https://aegis-green-seven.vercel.app'}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-apple-gray-900 font-semibold underline hover:text-apple-gray-700 transition-colors"
