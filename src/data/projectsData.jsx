@@ -27,8 +27,8 @@ export const mainProjects = [
 
   {
     id: 3,
-    title: 'Coming soon',
-    description: 'AI assisted journal, casual interactions get turnt into prioritized entried linked to your calender',
+    title: 'planIt - (Current project)',
+    description: 'AI assisted journal, casual Conversations get turnt into prioritized entried linked to your calender',
     size: 'wide',
     demos: [
       {description: '' },
