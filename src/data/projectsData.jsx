@@ -48,7 +48,7 @@ export const mainProjects = [
   {
     id: 5,
     title: 'Coming soon',
-    description: 'Maybe froomula 1 related',
+    description: 'Maybe formula 1 related?',
     size: 'medium',
     demos: [
       {description: '' },
